@@ -17,7 +17,19 @@ resource "azurerm_app_service_plan" "tf_fun_asp" {
   resource_group_name = azurerm_resource_group.tf_fun_rg.name
 
   sku {
-    tier = "Free"
-    size = "F1"
+    tier = "Standard"
+    size = "S1"
   }
+}
+
+resource "azurerm_linux_function_app" "tf_fun_lfa" {
+  name                = "func-tffunctions-linux"
+  resource_group_name = azurerm_resource_group.tf_fun_rg.name
+  location            = azurerm_resource_group.tf_fun_rg.location
+
+  storage_account_name       = azurerm_storage_account.tf_fun_sa.name
+  storage_account_access_key = azurerm_storage_account.tf_fun_sa.primary_access_key
+  service_plan_id            = azurerm_app_service_plan.tf_fun_asp.id
+
+  site_config {}
 }
