@@ -15,6 +15,8 @@ resource "azurerm_app_service_plan" "tf_fun_asp" {
   name                = "asp-tffunctions"
   location            = azurerm_resource_group.tf_fun_rg.location
   resource_group_name = azurerm_resource_group.tf_fun_rg.name
+  kind                = "Linux"
+  reserved            = true
 
   sku {
     tier = "Standard"
@@ -31,5 +33,40 @@ resource "azurerm_linux_function_app" "tf_fun_lfa" {
   storage_account_access_key = azurerm_storage_account.tf_fun_sa.primary_access_key
   service_plan_id            = azurerm_app_service_plan.tf_fun_asp.id
 
-  site_config {}
+  site_config {
+    application_stack {
+      python_version = "3.9"
+    }
+  }
+}
+
+resource "azurerm_function_app_function" "tf_fun_faf" {
+  name            = "func-tffunctions-function"
+  function_app_id = azurerm_linux_function_app.tf_fun_lfa.id
+  language        = "Python"
+
+  file {
+    name    = "__init__.py"
+    content = file("./function.py")
+  }
+
+  config_json = jsonencode({
+    "bindings" = [
+      {
+        "authLevel" = "function"
+        "direction" = "in"
+        "methods" = [
+          "get",
+          "post",
+        ]
+        "name" = "req"
+        "type" = "httpTrigger"
+      },
+      {
+        "direction" = "out"
+        "name"      = "$return"
+        "type"      = "http"
+      },
+    ]
+  })
 }
